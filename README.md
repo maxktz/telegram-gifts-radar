@@ -1,10 +1,12 @@
 # Telegram Gifts Radar
 
-<img src="assets/image.jpg" alt="Interface preview" width="200">
+<div style="text-align: center;">
+  <img src="assets/image.jpg" alt="Interface preview" width="200">
+</div>
 
 __A Telegram userbot that monitors and notifies about new Telegram gifts in real-time.__
 
-Telegram Channel [t.me/giftsradar](https:/t.me/giftsradar)
+> __Telegram Channel [t.me/giftsradar](https:/t.me/giftsradar)__
 
 ## Features
 
