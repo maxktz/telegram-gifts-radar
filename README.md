@@ -1,8 +1,10 @@
 # Telegram Gifts Radar
 
-![interface preview](assets/image.png)
+![interface preview](image.jpg)
 
-__A Telegram bot that monitors and notifies about new Telegram gifts in real-time.__
+__A Telegram userbot that monitors and notifies about new Telegram gifts in real-time.__
+
+Telegram Channel [t.me/giftsradar](https:/t.me/giftsradar)
 
 ## Features
 
@@ -50,7 +52,7 @@ __A Telegram bot that monitors and notifies about new Telegram gifts in real-tim
 
 ### Using Docker (Recommended)
 
-> Make sure you have [Docker](https://bun.sh/) installed
+> Make sure you have [Docker](https://https://docker.io/) installed
 
 1. Build the Docker image:
 
