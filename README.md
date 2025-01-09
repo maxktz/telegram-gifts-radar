@@ -2,7 +2,7 @@
 
 ![interface preview](assets/image.png)
 
-A Telegram bot that monitors and notifies about new Telegram gifts in real-time.
+__A Telegram bot that monitors and notifies about new Telegram gifts in real-time.__
 
 ## Features
 
