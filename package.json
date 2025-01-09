@@ -6,7 +6,8 @@
   "scripts": {
     "start": "bun run src/main.ts",
     "dev": "bun run --watch src/main.ts",
-    "lint": "bun x prettier --write src"
+    "lint": "bun x prettier --write src",
+    "migrate": "bunx prisma migrate deploy"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^5.2.1",
