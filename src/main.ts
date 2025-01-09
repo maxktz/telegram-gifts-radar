@@ -2,11 +2,12 @@ import { GiftsRadar } from './gifts-radar'
 import { startTelegramClient } from './utils'
 import { PrismaClient } from '@prisma/client'
 import * as Joi from 'joi'
+import * as path from 'path'
 import { TelegramClient } from 'telegram'
 
 const envSchema = Joi.object({
   CHAT_IDS: Joi.string().required(),
-  TELEGRAM_SESSION: Joi.string().required(),
+  TELEGRAM_SESSION_FILENAME: Joi.string().required(),
   TELEGRAM_API_ID: Joi.number().required(),
   TELEGRAM_API_HASH: Joi.string().required(),
   TELEGRAM_APP_VERSION: Joi.string().required(),
@@ -24,8 +25,9 @@ async function bootstrap() {
   if (error) throw error
 
   const proxyUrl: undefined | URL = env.PROXY && new URL(env.PROXY)
+  const sessionFile = path.join('sessions', env.TELEGRAM_SESSION_FILENAME)
   const telegramClient = new TelegramClient(
-    env.TELEGRAM_SESSION,
+    sessionFile,
     env.TELEGRAM_API_ID,
     env.TELEGRAM_API_HASH,
     {
