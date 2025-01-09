@@ -8,14 +8,12 @@ A Telegram bot that monitors and notifies about new Telegram gifts in real-time.
 
 - Monitors Telegram gifts every 30 seconds
 - Posts notifications about new gifts
-- Updates existing gift notifications
-- Tracks gift availability and stock status
-- Works as a userbot for reliable gift detection
+- Updates gift availability and stock status
 
 ## Tech Stack
 
 - TypeScript
-- Bun runtime
+- Bun Runtime
 - Prisma ORM
 - GramJS (Telegram client)
 - Docker
@@ -57,7 +55,7 @@ A Telegram bot that monitors and notifies about new Telegram gifts in real-time.
 1. Build the Docker image:
 
     ```sh
-    sh scripts/build.sh
+    sh scripts/cd.sh
     ```
 
 2. Run with integrated terminal to log into account, then Ctrl+C to stop
@@ -66,7 +64,7 @@ A Telegram bot that monitors and notifies about new Telegram gifts in real-time.
     sh scripts/run_integrated.sh
     ```
 
-3. Run container in background (docker-compose)
+3. Run container in background _(docker-compose)_
 
     ```sh
     sh scripts/run.sh
@@ -80,13 +78,13 @@ A Telegram bot that monitors and notifies about new Telegram gifts in real-time.
 
     ```sh
     bun install
-    bunx prisma generate
     ```
 
-2. Run database migrations
+2. Run database migrations and generate client
 
     ```sh
     bun run migrate
+    bunx prisma generate
     ```
 
 3. Start the application
@@ -101,4 +99,4 @@ A Telegram bot that monitors and notifies about new Telegram gifts in real-time.
 
 ## Author
 
-[Contact](t.me/maxktz) • [Telegram Channel](t.me/xcrypto_dev)
+[Contact](t.me/maxktz) • [My Telegram Channel](t.me/xcrypto_dev)
