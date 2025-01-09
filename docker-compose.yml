@@ -3,8 +3,10 @@ services:
     image: telegram-gifts-radar:latest
     container_name: telegram-gifts-radar-app
     command: 'bun run start'
+    env_file: .env
     volumes:
       - ./.env:/app/.env
+      - ./sessions:/app/sessions
     working_dir: /app
     restart: always
     logging:
