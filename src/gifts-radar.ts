@@ -3,12 +3,14 @@ import { PrismaClient, type StarGiftNotification } from '@prisma/client'
 import { Api, type TelegramClient } from 'telegram'
 import { CustomFile } from 'telegram/client/uploads'
 
+// TODO: add logging
+
 export class GiftsRadar {
   constructor(
     private readonly client: TelegramClient,
     private readonly prisma: PrismaClient,
     private readonly chatIds: string[],
-    private readonly updateIntervalSec: number = 30,
+    private readonly updateIntervalSec: number = 50,
   ) {
     if (chatIds.length === 0) throw 'No chat IDs provided'
   }
