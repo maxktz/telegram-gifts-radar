@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model StarGiftNotification {
+  giftId          BigInt
+  chatId          String
+  giftMessageId   Int
+  infoMessageId   Int
+  infoMessageText String
+
+  @@id([giftId, chatId])
+}

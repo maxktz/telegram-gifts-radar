@@ -1,0 +1,15 @@
+services:
+  app:
+    image: telegram-gifts-radar:latest
+    container_name: telegram-gifts-radar-app
+    command: "bun run start"
+    volumes:
+      - ./.env:/app/.env
+    working_dir: /app
+    ports:
+      - "5432:5432"
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"

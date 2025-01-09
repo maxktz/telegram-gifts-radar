@@ -1,0 +1,27 @@
+{
+  "name": "telegram-gifts-radar",
+  "module": "src/main.ts",
+  "author": "maxktz",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/main.ts",
+    "dev": "bun run --watch src/main.ts",
+    "lint": "bun x prettier --write src"
+  },
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^5.2.1",
+    "@types/bun": "latest",
+    "prettier": "^3.4.2",
+    "prisma": "^6.2.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.2.1",
+    "dotenv": "^16.4.7",
+    "inquirer": "^12.3.0",
+    "joi": "^17.13.3",
+    "telegram": "^2.26.16"
+  }
+}
