@@ -1,6 +1,6 @@
 # Telegram Gifts Radar
 
-![interface preview](assets/image.jpg)
+<img src="assets/image.jpg" alt="Interface preview" width="200">
 
 __A Telegram userbot that monitors and notifies about new Telegram gifts in real-time.__
 
