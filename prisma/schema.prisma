@@ -7,8 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model StarGift {
+  giftId       BigInt                 @id
+  notification StarGiftNotification[]
+}
+
 model StarGiftNotification {
   giftId          BigInt
+  gift            StarGift @relation(fields: [giftId], references: [giftId])
   chatId          String
   giftMessageId   Int
   infoMessageId   Int

@@ -1,9 +1,12 @@
 import { GiftsRadar } from './gifts-radar'
+import { NotificationsService } from './notifications-service'
+import type { CallRecipient } from './types'
 import { startTelegramClient } from './utils'
 import { PrismaClient } from '@prisma/client'
 import * as Joi from 'joi'
 import * as path from 'path'
 import { TelegramClient } from 'telegram'
+import twilio, { Twilio } from 'twilio'
 
 const envSchema = Joi.object({
   CHAT_IDS: Joi.string().required(),
@@ -15,6 +18,10 @@ const envSchema = Joi.object({
   TELEGRAM_SYSTEM_VERSION: Joi.string().required(),
   // optional:
   PROXY: Joi.string().optional(),
+  TWILIO_ACCOUNT_SID: Joi.string().optional(),
+  TWILIO_AUTH_TOKEN: Joi.string().optional(),
+  TWILIO_PHONE_NUMBER: Joi.string().optional(),
+  CALL_RECIPIENTS: Joi.string().optional(),
 })
 
 async function bootstrap() {
@@ -24,8 +31,22 @@ async function bootstrap() {
   })
   if (error) throw error
 
+  const chatIdsToSend: string[] = env.CHAT_IDS.split(',').map((id: string) =>
+    id.trim(),
+  )
+
+  const callRecipients: CallRecipient[] = env.CALL_RECIPIENTS
+    ? JSON.parse(env.CALL_RECIPIENTS).map(
+        (v: { id: string; phone: string }) => ({
+          telegramId: v.id,
+          phoneNumber: v.phone,
+        }),
+      )
+    : []
+
   const proxyUrl: undefined | URL = env.PROXY && new URL(env.PROXY)
   const sessionFile = path.join('sessions', env.TELEGRAM_SESSION_FILENAME)
+
   const telegramClient = new TelegramClient(
     sessionFile,
     env.TELEGRAM_API_ID,
@@ -47,14 +68,25 @@ async function bootstrap() {
   )
   await startTelegramClient(telegramClient)
 
-  const prisma = new PrismaClient()
+  const twilioClient: Twilio | undefined =
+    env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && callRecipients.length
+      ? twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN)
+      : undefined
 
-  const chatIds: string[] = env.CHAT_IDS.split(',').map((id: string) =>
-    id.trim(),
+  const notificationService = new NotificationsService(
+    telegramClient,
+    twilioClient,
+    env.TWILIO_PHONE_NUMBER,
+    callRecipients,
   )
 
-  const app = new GiftsRadar(telegramClient, prisma, chatIds)
-
+  const prisma = new PrismaClient()
+  const app = new GiftsRadar(
+    notificationService,
+    telegramClient,
+    prisma,
+    chatIdsToSend,
+  )
   await app.run()
 }
 bootstrap()

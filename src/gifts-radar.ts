@@ -1,36 +1,55 @@
+import type { NotificationsService } from './notifications-service'
 import { sleep } from './utils'
-import { PrismaClient, type StarGiftNotification } from '@prisma/client'
+import { Prisma, PrismaClient, type StarGiftNotification } from '@prisma/client'
 import { Api, type TelegramClient } from 'telegram'
 import { CustomFile } from 'telegram/client/uploads'
 
-// TODO: add logging
-
 export class GiftsRadar {
   constructor(
+    private readonly notifications: NotificationsService,
     private readonly client: TelegramClient,
     private readonly prisma: PrismaClient,
     private readonly chatIds: string[],
-    private readonly updateIntervalSec: number = 50,
+    private readonly updateIntervalSec: number = 40,
   ) {
     if (chatIds.length === 0) throw 'No chat IDs provided'
   }
 
   async run() {
     while (true) {
+      console.log('Checking for new gifts...')
       // @ts-ignore
       const giftsResult: Api.payments.StarGifts = await this.client.invoke(
         new Api.payments.GetStarGifts({ hash: 0 }),
       )
 
-      // @ts-expect-error bigint type bug
-      const gifts = giftsResult.gifts.sort((a, b) => a.id.minus(b.id)) // sort by date asc
+      const gifts = giftsResult.gifts
+        // @ts-expect-error bigint type bug
+        .sort((a, b) => a.id.minus(b.id)) // sort by date asc
 
-      // handle gifts in all chats
-      await Promise.all(
-        this.chatIds.map((chatId) => this.handleChatGifts(gifts, chatId)),
+      const existingGifts = await this.prisma.starGift.findMany()
+      const existingGiftIdsHashset = new Set(
+        existingGifts.map((gift) => String(gift.giftId)),
       )
 
-      // TODO: update pinned message with date of last update and other info
+      const newGiftExists = gifts.some(
+        (gift) => !existingGiftIdsHashset.has(String(gift.id)),
+      )
+
+      // handle gifts in all chats
+      console.log('Syncing gift notifications...')
+      const promises = [
+        ...this.chatIds.map((chatId) => this.handleChatGifts(gifts, chatId)),
+      ]
+      if (newGiftExists) {
+        console.log('New gift found, sending notifications...')
+        promises.push(this.notifications.sendCallNotifications())
+      } else {
+        console.log('No new gifts found')
+      }
+      await Promise.all(promises)
+
+      console.log(`Waiting ${this.updateIntervalSec}s till next check...`)
       await sleep(this.updateIntervalSec * 1000)
     }
   }
@@ -39,11 +58,8 @@ export class GiftsRadar {
     for (const gift of gifts) {
       const notification = await this.prisma.starGiftNotification.findUnique({
         where: {
-          giftId_chatId: {
-            // @ts-expect-error bigint type bug
-            giftId: gift.id,
-            chatId,
-          },
+          // @ts-expect-error bigint type bug
+          giftId_chatId: { giftId: gift.id, chatId },
         },
       })
 
@@ -62,11 +78,20 @@ export class GiftsRadar {
           this.deleteMessageNoThrow(chatId, notification.infoMessageId)
         }
         // create new notification
-        const newNotification = await this.newGiftNotification(
-          gift,
-          chatId,
-          notification !== undefined, // if it existed, silent = true
-        )
+        let sent
+        try {
+          sent = await this.newGiftNotification(
+            gift,
+            chatId,
+            notification !== undefined, // if existed before, silent = true
+          )
+        } catch (e) {
+          console.log(
+            `error sending new gift notification into chat ${chatId}`,
+            e,
+          )
+          return
+        }
         await this.prisma.starGiftNotification.upsert({
           where: {
             giftId_chatId: {
@@ -75,8 +100,25 @@ export class GiftsRadar {
               chatId,
             },
           },
-          update: newNotification,
-          create: newNotification,
+          update: {
+            giftMessageId: sent.giftMsg.id,
+            infoMessageId: sent.infoMsg.id,
+            infoMessageText: sent.text,
+          },
+          create: {
+            gift: {
+              connectOrCreate: {
+                // @ts-expect-error bigint bug
+                where: { giftId: gift.id },
+                // @ts-expect-error bigint bug
+                create: { giftId: gift.id },
+              },
+            },
+            chatId: chatId,
+            giftMessageId: sent.giftMsg.id,
+            infoMessageId: sent.infoMsg.id,
+            infoMessageText: sent.text,
+          },
         })
       }
     }
@@ -108,7 +150,7 @@ export class GiftsRadar {
     gift: Api.StarGift,
     chatId: string,
     silent: boolean,
-  ): Promise<StarGiftNotification> {
+  ) {
     const file = await this.getGiftMediaInputFile(gift)
 
     const giftMsg = await this.client.sendMessage(chatId, {
@@ -121,15 +163,7 @@ export class GiftsRadar {
       parseMode: 'html',
       silent,
     })
-
-    return {
-      // @ts-expect-error bigint type bug
-      giftId: gift.id,
-      chatId: chatId,
-      giftMessageId: giftMsg.id,
-      infoMessageId: infoMsg.id,
-      infoMessageText: text,
-    }
+    return { giftMsg, infoMsg, text }
   }
 
   private giftNotificationText(gift: Api.StarGift) {
