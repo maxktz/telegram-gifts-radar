@@ -62,64 +62,59 @@ export class GiftsRadar {
           giftId_chatId: { giftId: gift.id, chatId },
         },
       })
-
-      try {
-        // try edit existing notification
-        if (!notification) throw new Error('No notification found')
-        await this.editGiftNotification(gift, notification)
-      } catch (e) {
-        // @ts-expect-error
-        if (e.errorMessage === 'MESSAGE_NOT_MODIFIED') {
-          continue
-        }
-        if (notification) {
-          // cleanup old notification if exists
-          this.deleteMessageNoThrow(chatId, notification.giftMessageId)
-          this.deleteMessageNoThrow(chatId, notification.infoMessageId)
-        }
-        // create new notification
-        let sent
+      if (!notification) {
         try {
-          sent = await this.newGiftNotification(
+          const sent = await this.newGiftNotification(
             gift,
             chatId,
             notification !== undefined, // if existed before, silent = true
           )
+          await this.prisma.starGiftNotification.upsert({
+            where: {
+              giftId_chatId: {
+                // @ts-expect-error bigint type bug
+                giftId: gift.id,
+                chatId,
+              },
+            },
+            update: {
+              giftMessageId: sent.giftMsg.id,
+              infoMessageId: sent.infoMsg.id,
+              infoMessageText: sent.text,
+            },
+            create: {
+              gift: {
+                connectOrCreate: {
+                  // @ts-expect-error bigint bug
+                  where: { giftId: gift.id },
+                  // @ts-expect-error bigint bug
+                  create: { giftId: gift.id },
+                },
+              },
+              chatId: chatId,
+              giftMessageId: sent.giftMsg.id,
+              infoMessageId: sent.infoMsg.id,
+              infoMessageText: sent.text,
+            },
+          })
         } catch (e) {
           console.log(
             `error sending new gift notification into chat ${chatId}`,
             e,
           )
-          return
         }
-        await this.prisma.starGiftNotification.upsert({
-          where: {
-            giftId_chatId: {
-              // @ts-expect-error bigint type bug
-              giftId: gift.id,
-              chatId,
-            },
-          },
-          update: {
-            giftMessageId: sent.giftMsg.id,
-            infoMessageId: sent.infoMsg.id,
-            infoMessageText: sent.text,
-          },
-          create: {
-            gift: {
-              connectOrCreate: {
-                // @ts-expect-error bigint bug
-                where: { giftId: gift.id },
-                // @ts-expect-error bigint bug
-                create: { giftId: gift.id },
-              },
-            },
-            chatId: chatId,
-            giftMessageId: sent.giftMsg.id,
-            infoMessageId: sent.infoMsg.id,
-            infoMessageText: sent.text,
-          },
-        })
+      } else {
+        try {
+          await this.editGiftNotification(gift, notification)
+        } catch (e) {
+          // @ts-expect-error
+          if (e.errorMessage === 'MESSAGE_NOT_MODIFIED') {
+            continue
+          } else {
+            // @ts-expect-error
+            console.error('error editing gift notification', e?.message)
+          }
+        }
       }
     }
   }
