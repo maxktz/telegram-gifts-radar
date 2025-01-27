@@ -111,8 +111,11 @@ export class GiftsRadar {
           if (e.errorMessage === 'MESSAGE_NOT_MODIFIED') {
             continue
           } else {
-            // @ts-expect-error
-            console.error('error editing gift notification', e?.message)
+            console.error(
+              `error editing gift notification chatId ${chatId}, giftId ${notification.giftId}`,
+              // @ts-expect-error
+              e?.message,
+            )
           }
         }
       }
