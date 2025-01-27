@@ -20,5 +20,7 @@ model StarGiftNotification {
   infoMessageId   Int
   infoMessageText String
 
+  editing Boolean @default(true)
+
   @@id([giftId, chatId])
 }

@@ -32,7 +32,7 @@ export class GiftsRadar {
         existingGifts.map((gift) => String(gift.giftId)),
       )
 
-      const newGiftExists = gifts.some(
+      const newGiftsExists = gifts.some(
         (gift) => !existingGiftIdsHashset.has(String(gift.id)),
       )
 
@@ -41,7 +41,7 @@ export class GiftsRadar {
       const promises = [
         ...this.chatIds.map((chatId) => this.handleChatGifts(gifts, chatId)),
       ]
-      if (newGiftExists) {
+      if (newGiftsExists) {
         console.log('New gift found, sending notifications...')
         promises.push(this.notifications.sendCallNotifications())
       } else {
@@ -103,7 +103,7 @@ export class GiftsRadar {
             e,
           )
         }
-      } else {
+      } else if (notification.editing) {
         try {
           await this.editGiftNotification(gift, notification)
         } catch (e) {
