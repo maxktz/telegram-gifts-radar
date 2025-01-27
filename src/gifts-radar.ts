@@ -10,13 +10,13 @@ export class GiftsRadar {
     private readonly client: TelegramClient,
     private readonly prisma: PrismaClient,
     private readonly chatIds: string[],
-    private readonly updateIntervalSec: number = 15,
+    private readonly updateIntervalSec: number = 10,
   ) {
     if (chatIds.length === 0) throw 'No chat IDs provided'
   }
 
   async run() {
-    while (true) {
+    for (let i = 0; true; i++) {
       console.log('Checking for new gifts...')
       // @ts-ignore
       const giftsResult: Api.payments.StarGifts = await this.client.invoke(
@@ -38,8 +38,11 @@ export class GiftsRadar {
 
       // handle gifts in all chats
       console.log('Syncing gift notifications...')
+      const editExisting = i % 5 === 0 // every 5th time
       const promises = [
-        ...this.chatIds.map((chatId) => this.handleChatGifts(gifts, chatId)),
+        ...this.chatIds.map((chatId) =>
+          this.handleChatGifts(gifts, chatId, editExisting),
+        ),
       ]
       if (newGiftsExists) {
         console.log('New gift found, sending notifications...')
@@ -54,7 +57,11 @@ export class GiftsRadar {
     }
   }
 
-  private async handleChatGifts(gifts: Api.StarGift[], chatId: string) {
+  private async handleChatGifts(
+    gifts: Api.StarGift[],
+    chatId: string,
+    editExisting: boolean,
+  ) {
     for (const gift of gifts) {
       const notification = await this.prisma.starGiftNotification.findUnique({
         where: {
@@ -103,7 +110,7 @@ export class GiftsRadar {
             e,
           )
         }
-      } else if (notification.editing) {
+      } else if (editExisting && notification.editing) {
         try {
           await this.editGiftNotification(gift, notification)
         } catch (e) {
