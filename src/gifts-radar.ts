@@ -10,7 +10,7 @@ export class GiftsRadar {
     private readonly client: TelegramClient,
     private readonly prisma: PrismaClient,
     private readonly chatIds: string[],
-    private readonly updateIntervalSec: number = 10,
+    private readonly updateIntervalSec: number = 15,
   ) {
     if (chatIds.length === 0) throw 'No chat IDs provided'
   }
